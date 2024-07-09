@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "806170002014",
+    "project_id": "budgetcalculator-bfd7b",
+    "storage_bucket": "budgetcalculator-bfd7b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806170002014:android:f30fa03672af2094d4eacf",
+        "android_client_info": {
+          "package_name": "com.example.home_budget_calculator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0CpXjblO9UPhI9h6x65_IYzstZRaqhOY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

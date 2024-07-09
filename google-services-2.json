@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "806170002014",
+    "project_id": "budgetcalculator-bfd7b",
+    "storage_bucket": "budgetcalculator-bfd7b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806170002014:android:f30fa03672af2094d4eacf",
+        "android_client_info": {
+          "package_name": "com.example.home_budget_calculator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "806170002014-30r08dpogbukeddtblrve5jp1e9aiskr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.home_budget_calculator",
+            "certificate_hash": "ecc3e5a29254743e5a4d34a92b3aef11904bac20"
+          }
+        },
+        {
+          "client_id": "806170002014-o9r95vrphmmmogknqg0a0mevnt0elrhi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0CpXjblO9UPhI9h6x65_IYzstZRaqhOY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "806170002014-o9r95vrphmmmogknqg0a0mevnt0elrhi.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "806170002014-k2dakdjmg9fdcu9n1mamqhvgj2hfobqb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.homeBudgetCalculator"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
