@@ -23,7 +23,7 @@ class _MainPageState extends State<MainPage> {
 
   List<Widget> pages = [
     HomePage(),
-    TotalPage(),
+    const TotalPage(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -56,78 +56,116 @@ class _HomePageState extends State<HomePage> {
     TextEditingController _projectNameController = TextEditingController();
     String? type;
     String? createdBy;
-
+    String? _selectedFilter;
     return Scaffold(
       appBar: AppBar(
         title: const Center(child: Text('Expenses')),
-
       ),
-      body: Center(
-        child: StreamBuilder(
-          stream: getexpenses(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
-            } else {
-              if (snapshot.data!.docs.isEmpty) {
-                return const Center(
-                  child: Text('No Expenses'),
-                );
-              } else {
-                return ListView.builder(
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    var expense = snapshot.data!.docs[index];
-                    return Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
+      body: StreamBuilder(
+        stream: getexpenses(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No Expenses'));
+          } else {
+            var expenses = snapshot.data!.docs;
+            if (_selectedFilter != null && _selectedFilter != 'All') {
+              expenses = expenses
+                  .where((doc) => doc['category'] == _selectedFilter)
+                  .toList();
+            }
+            return ListView.builder(
+              itemCount: expenses.length,
+              itemBuilder: (context, index) {
+                var expense = expenses[index];
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Dismissible(
+
+
+                     key: Key(expense.id),
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      direction: DismissDirection.endToStart,
+
+       confirmDismiss: (DismissDirection direction) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Confirm"),
+          content: const Text("Are you sure you want to delete this expense?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("CANCEL"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text("DELETE"),
+            ),
+          ],
+        );
+      },
+    );
+  },
+      onDismissed: (direction) {
+
+
+        deleteExpense(expense.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Expense deleted')),
+        );
+      },
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
                         title: Text(
                           capitalizeFirstLetter(expense['category']),
                           style: const TextStyle(
-                            color: Colors.orange,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              color: Colors.orange, fontSize: 24),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 8),
+                            Text(capitalizeFirstLetter(
+                                expense['description'] ?? '')),
+                            Text(_formatTimestamp(expense['created_at'])),
+                            Text('Created by: ${expense['createdBy']}'),
+                          ],
+                        ),
+                        trailing: Wrap(
+                          children: [
                             Text(
-                              capitalizeFirstLetter(expense['description']),
-                              style: const TextStyle(fontSize: 16),
+                              '₹${expense['amount'].toString()}',
+                              style: const TextStyle(fontSize: 20),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Created by: ${expense['createdBy']}',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Date: ${_formatTimestamp(expense['created_at'])}',
-                              style: TextStyle(color: Colors.grey[600]),
+
+                                IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                _showUpdateDialog(context, expense);
+                              },
                             ),
                           ],
                         ),
-                        trailing: Text(
-                          '\₹ ${expense['amount']}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 );
-              }
-            }
-          },
-        ),
+              },
+            );
+          }
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -154,13 +192,6 @@ class _HomePageState extends State<HomePage> {
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _projectNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Expense Name',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _amount,
@@ -172,14 +203,6 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _description,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 3,
-                      ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField(
                         value: type ?? 'Material',
@@ -199,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                             .toList(),
                         onChanged: (value) {
                           setState(() {
-                            type = value as String?;
+                            type = value;
                           });
                         },
                       ),
@@ -215,14 +238,13 @@ class _HomePageState extends State<HomePage> {
                           'Preethi',
                           'Diljith',
                           'Created By'
-
                         ]
                             .map((e) =>
                                 DropdownMenuItem(value: e, child: Text(e)))
                             .toList(),
                         onChanged: (value) {
                           setState(() {
-                            createdBy = value as String?;
+                            createdBy = value;
                           });
                         },
                       ),
@@ -243,15 +265,24 @@ class _HomePageState extends State<HomePage> {
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green),
                             onPressed: () {
-                              addexpense(
-                                name: _projectNameController.text,
-                                amount: int.parse(_amount.text),
-                                description: _description.text,
-                                type: _projectNameController.text,
-                                createdBy: createdBy ?? 'Unknown',
-                              );
-                              _projectNameController.clear();
-                              Navigator.pop(context);
+                              if (_amount.text.isEmpty ||
+                                  type == null ||
+                                  createdBy == null) {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                  content: Text('All fields are required'),
+                                ));
+                              } else {
+                                addexpense(
+                                  name: _projectNameController.text,
+                                  amount: int.parse(_amount.text),
+                                  description: _description.text,
+                                  type: type ?? 'Material',
+                                  createdBy: createdBy ?? 'Unknown',
+                                );
+                                _projectNameController.clear();
+                                Navigator.pop(context);
+                              }
                             },
                             child: const Text('Add Expense'),
                           ),
@@ -268,8 +299,111 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  void _showUpdateDialog(BuildContext context, DocumentSnapshot expense) {
+  final _formKey = GlobalKey<FormState>();
+  final _amountController = TextEditingController(text: expense['amount'].toString());
+  final _descriptionController = TextEditingController(text: expense['description']);
+  String? _category = expense['category'];
+  String? createdBy = expense['createdBy'];
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Update Expense'),
+        content: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _amountController,
+                  decoration: const InputDecoration(labelText: 'Amount'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an amount';
+                    }
+                    return null;
+                  },
+                ),
+
+                DropdownButtonFormField<String>(
+                  value: _category,
+                  items: ['Food', 'Material', 'Labour', 'Permission', 'Other']
+                      .map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _category = newValue;
+                    });
+                  },
+                  decoration: const InputDecoration(labelText: 'Category'),
+                ),
+                 DropdownButtonFormField<String>(
+                  value: createdBy,
+                  items: ['Dasaradhan', 'Preethi', 'Diljith', 'Created By']
+                      .map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      createdBy = newValue;
+                    });
+                  },
+                  decoration: const InputDecoration(labelText: 'Created By'),
+                ),
+
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: const Text('Update'),
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                updateExpense(expense.id, {
+                  'amount': int.parse(_amountController.text),
+                 'createdBy': createdBy,
+                  'category': _category,
+                });
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Expense updated')),
+                );
+              }
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 }
 
+
+  Future<void> updateExpense(String docId, Map<String, dynamic> newData) async {
+    await FirebaseFirestore.instance.collection('projects').doc(docId).update(newData);
+  }
+ Future<void> deleteExpense(String docId) async {
+    await FirebaseFirestore.instance.collection('projects').doc(docId).delete();
+  }
 addexpense(
     {required String type,
     required int amount,
@@ -293,6 +427,7 @@ addexpense(
 Stream<QuerySnapshot> getexpenses() {
   return FirebaseFirestore.instance.collection('projects').snapshots();
 }
+
 
 extension CapitalizeExtension on String {
   String capitalize() {
