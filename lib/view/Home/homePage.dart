@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:home_budget_calculator/view/totalPage/totalPage.dart';
+import 'package:intl/intl.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -12,7 +13,6 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
-
   ontapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -20,6 +20,9 @@ class _MainPageState extends State<MainPage> {
       print("sasas${_selectedIndex}");
     });
   }
+
+
+
 
   List<Widget> pages = [
     HomePage(),
@@ -48,6 +51,48 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  DateTime _doj = DateTime.now();
+
+
+    Widget _buildDatePicker() {
+    return InkWell(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.blue),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+    _doj != null ? DateFormat.yMMMd().format(_doj!) : 'Select Date ',
+              style: const TextStyle(
+                  color: Colors.black, fontWeight: FontWeight.w100),
+            ),
+            const Icon(Icons.calendar_month_outlined)
+          ],
+        ),
+      ),
+      onTap: () async {
+        await showDatePicker(
+          initialEntryMode: DatePickerEntryMode.calendarOnly,
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2023),
+          lastDate: DateTime(DateTime.now().year + 5),
+        ).then((value) {
+          if (value != null) {
+            setState(() {
+              _doj = value;
+            });
+          }
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -139,7 +184,12 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Text(capitalizeFirstLetter(
                                 expense['description'] ?? '')),
-                            Text(_formatTimestamp(expense['created_at'])),
+                            Text(
+
+                                'Date: ${_formatTimestamp(expense['payment_at'] ?? expense['created_at'])}'),
+                              // _formatTimestamp(expense['created_at'])),
+
+
                             Text('Created by: ${expense['createdBy']}'),
                           ],
                         ),
@@ -203,7 +253,19 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _description,
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
                       const SizedBox(height: 16),
+
+_buildDatePicker(),
+                      const SizedBox(height: 16),
+
+
                       DropdownButtonFormField(
                         value: type ?? 'Material',
                         decoration: const InputDecoration(
@@ -228,16 +290,16 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField(
-                        value: createdBy ?? 'Created By',
+                        value: createdBy ?? 'Payment By',
                         decoration: const InputDecoration(
-                          labelText: 'Created By',
+                          labelText: 'Payment By',
                           border: OutlineInputBorder(),
                         ),
                         items: [
                           'Dasaradhan',
                           'Preethi',
                           'Diljith',
-                          'Created By'
+                          'Payment By'
                         ]
                             .map((e) =>
                                 DropdownMenuItem(value: e, child: Text(e)))
@@ -279,8 +341,15 @@ class _HomePageState extends State<HomePage> {
                                   description: _description.text,
                                   type: type ?? 'Material',
                                   createdBy: createdBy ?? 'Unknown',
+                                  payment_at: _doj,
+
+
                                 );
                                 _projectNameController.clear();
+                                _amount.clear();
+                                _description.clear();
+                                _doj = DateTime.now();
+                                
                                 Navigator.pop(context);
                               }
                             },
@@ -298,7 +367,11 @@ class _HomePageState extends State<HomePage> {
         child: const Icon(Icons.add),
       ),
     );
+
+
   }
+
+
 
   void _showUpdateDialog(BuildContext context, DocumentSnapshot expense) {
   final _formKey = GlobalKey<FormState>();
@@ -329,6 +402,13 @@ class _HomePageState extends State<HomePage> {
                     return null;
                   },
                 ),
+                      const SizedBox(height: 10),
+
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+                      const SizedBox(height: 10),
 
                 DropdownButtonFormField<String>(
                   value: _category,
@@ -346,6 +426,9 @@ class _HomePageState extends State<HomePage> {
                   },
                   decoration: const InputDecoration(labelText: 'Category'),
                 ),
+
+                      const SizedBox(height: 10),
+
                  DropdownButtonFormField<String>(
                   value: createdBy,
                   items: ['Dasaradhan', 'Preethi', 'Diljith', 'Created By']
@@ -382,6 +465,8 @@ class _HomePageState extends State<HomePage> {
                   'amount': int.parse(_amountController.text),
                  'createdBy': createdBy,
                   'category': _category,
+                  'description': _descriptionController.text,
+
                 });
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -409,7 +494,10 @@ addexpense(
     required int amount,
     String? description,
     required String name,
-    required String createdBy}) {
+    required String createdBy,
+    dynamic payment_at,
+
+    }) {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   // String id = firestore.collection('accounts').doc().id;
@@ -421,6 +509,7 @@ addexpense(
     'amount': amount,
     'description': description,
     'createdBy': createdBy,
+    'payment_at': payment_at,
   }).then((value) {});
 }
 
