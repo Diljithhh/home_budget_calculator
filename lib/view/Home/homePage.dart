@@ -31,7 +31,9 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.purple,
       bottomNavigationBar: BottomNavigationBar(
+
         currentIndex: _selectedIndex,
         onTap: ontapped,
         items: const [
@@ -103,8 +105,14 @@ class _HomePageState extends State<HomePage> {
     String? createdBy;
     String? _selectedFilter;
     return Scaffold(
+      backgroundColor: Colors.purple,
       appBar: AppBar(
-        title: const Center(child: Text('Expenses')),
+        backgroundColor: Colors.purple,
+        title: const Center(child: Text('Expenses'
+        ,style: TextStyle(
+          color: Colors.white
+        ),
+        )),
       ),
       body: StreamBuilder(
         stream: getexpenses(),
@@ -349,7 +357,7 @@ _buildDatePicker(),
                                 _amount.clear();
                                 _description.clear();
                                 _doj = DateTime.now();
-                                
+
                                 Navigator.pop(context);
                               }
                             },

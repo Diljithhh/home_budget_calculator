@@ -8,8 +8,12 @@ class TotalPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.purple,
       appBar: AppBar(
-        title: const Text('Total Expenses'),
+        backgroundColor: Colors.purple,
+        title: const Text('Total Expenses'
+        ,style: TextStyle(color: Colors.white),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: getexpenses(),
@@ -47,8 +51,10 @@ class TotalPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Totals by Creator',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Totals by Creators'
+
+              ,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white)),
               const SizedBox(height: 10),
               ...totalByCreator.entries
                   .map((entry) => Card(
